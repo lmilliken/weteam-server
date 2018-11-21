@@ -4,6 +4,16 @@ const passport = require('passport');
 
 router.get('/login');
 
+router.get(
+  '/google',
+  passport.authenticate('google', {
+    scope: ['profile']
+  })
+);
+router.get('/google/redirect', passport.authenticate('google'), (req, res) => {
+  res.redirect('/profile');
+});
+
 router.get('/github', passport.authenticate('github'));
 router.get('/github/callback', passport.authenticate('github'), (req, res) => {
   res.send('github');
@@ -18,19 +28,8 @@ router.get(
   }
 );
 router.get('/logout', (req, res) => {
-  res.send('logging out');
-});
-
-//Google doesn't work
-router.get(
-  '/google',
-  passport.authenticate('google', {
-    scope: ['profile']
-  })
-);
-
-router.get('/google/redirect', passport.authenticate('google'), (req, res) => {
-  res.send('callback place');
+  req.logout();
+  res.send('you are logged out');
 });
 
 module.exports = router;
