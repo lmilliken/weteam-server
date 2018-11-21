@@ -5,6 +5,14 @@ const FacebookStrategy = require('passport-facebook');
 const config = require('./config');
 const User = require('../models/user');
 
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  User.findById(id).then((user) => done(null, user));
+});
+
 passport.use(
   new GoogleStrategy(
     {
@@ -13,16 +21,25 @@ passport.use(
       callbackURL: '/auth/google/redirect'
     },
     function(accessToken, refreshToken, profile, doneCallback) {
-      new User({
-        username: profile.username,
-        providerId: profile.id,
-        provider: 'Google'
-      })
-        .save()
-        .then((user) => {
-          console.log({ user });
-          doneCallback(null, user);
-        });
+      // console.log({ profile });
+      User.findOne({ providerId: profile.id }).then((currentUser) => {
+        if (currentUser) {
+          //user already exists
+          console.log('user exists: ', currentUser);
+          doneCallback(null, currentUser);
+        } else {
+          new User({
+            username: profile.displayName,
+            providerId: profile.id,
+            provider: 'Google'
+          })
+            .save()
+            .then((user) => {
+              console.log('new user', { user });
+              doneCallback(null, user);
+            });
+        }
+      });
     }
   )
 );
